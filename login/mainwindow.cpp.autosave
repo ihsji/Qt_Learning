@@ -1,0 +1,137 @@
+#include "mainwindow.h"
+#include <QWidget>
+#include <QVBoxLayout> //控件垂直对齐
+#include <QMessageBox>
+
+
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+{
+    gui_Setup(); //窗口控件的初始化
+    connect(login_PB_ptr,&QPushButton::clicked,this,&MainWindow::onLogin);
+    connect(regist_PB_ptr,&QPushButton::clicked,this,&MainWindow::onRegister);
+}
+
+MainWindow::~MainWindow()
+{
+}
+
+void MainWindow::gui_Setup()
+{
+
+    this->setCentralWidget(new QWidget);    //生成主界面中心窗口
+    
+
+    nameInput_LE_ptr = new QLineEdit(this->centralWidget());    //在中心窗口中添加一个输入名字的行编辑器
+    nameInput_LE_ptr->setPlaceholderText("输入用户名");          //设置行编辑器的提示文本
+    nameInput_LE_ptr->setFont(QFont("黑体",30));                //设置行编辑器的字体大小
+
+    pswdInput_LE_ptr = new QLineEdit(this->centralWidget());    //在中心窗口中添加一个输入密码的行编辑器
+    pswdInput_LE_ptr->setPlaceholderText("输入用户密码");          //设置行编辑器的提示文本
+    pswdInput_LE_ptr->setFont(QFont("黑体",30));                //设置行编辑器的字体大小
+    pswdInput_LE_ptr->setEchoMode(QLineEdit::Password);
+    pswdInput_LE_ptr->setClearButtonEnabled(true);
+
+    regist_PB_ptr = new QPushButton(this->centralWidget());   //在中心窗口中添加一个注册的按钮
+    regist_PB_ptr->setText("注册");                           //设置按钮文本
+    regist_PB_ptr->setFont(QFont("黑体",30));                 //设置按钮字体
+
+    login_PB_ptr = new QPushButton(this->centralWidget());   //在中心窗口中添加一个登录的按钮
+    login_PB_ptr->setText("登录");                           //设置按钮文本
+    login_PB_ptr->setFont(QFont("黑体",30));                 //设置按钮字体
+
+   QVBoxLayout * layout = new QVBoxLayout(this->centralWidget()); //以中心窗口为基准生成布局对象
+   //添加布局中的控件
+   layout->addWidget(nameInput_LE_ptr);
+   layout->addWidget(pswdInput_LE_ptr);
+   layout->addWidget(regist_PB_ptr);
+   layout->addWidget(login_PB_ptr);
+
+
+}
+
+void MainWindow::onLogin()
+{
+    // 获取输入内容并去除首尾空格
+    QString username = nameInput_LE_ptr->text().trimmed();
+    QString password = pswdInput_LE_ptr->text().trimmed();
+
+    // 检查输入是否为空
+    if(username.isEmpty() || password.isEmpty()){
+        QMessageBox::warning(this, "登录失败", "请输入用户名和密码！");
+        return;
+    }
+
+    //验证用户信息
+    if(!userCredentials.contains(username))
+    {
+        QMessageBox::warning(this, "登录失败", "用户名不存在！");
+        return;
+    }
+
+    if(userCredentials.value(username) != password)
+    {
+        QMessageBox::warning(this, "登录失败", "密码不正确！");
+        return;
+    }
+
+    // 验证通过后的操作
+    QMessageBox::information(this, "登录成功", "欢迎回来，" + username + "！");
+
+    if(userWidget_ptr == nullptr)
+    {
+        userWidget_ptr = new userWidget;
+        connect(userWidget_ptr, &userWidget::logout, this, &MainWindow::onLogout);
+    }
+
+
+    if(userWidget_ptr == nullptr)
+    {
+        userWidget_ptr = new userWidget;
+        connect(userWidget_ptr,&userWidget::logout,this,&MainWindow::onLogout);
+    }
+
+    userWidget_ptr->show();
+    this->hide();
+
+    // 清空输入框
+    nameInput_LE_ptr->clear();
+    pswdInput_LE_ptr->clear();
+}
+
+void MainWindow::onLogout()
+{
+    userWidget_ptr->hide();
+    this->show();
+}
+
+void MainWindow:: onRegister()
+{
+    // 获取输入内容并去除首尾空格
+    QString username = nameInput_LE_ptr->text().trimmed();
+    QString password = pswdInput_LE_ptr->text().trimmed();
+
+    // 检查输入是否为空
+    if(username.isEmpty() || password.isEmpty())
+    {
+        QMessageBox::warning(this,"注册失败","用户名和密码不能为空！");
+        return;
+    }
+    //检查用户名是否已存在
+   if(userCredentials.contains(username))
+   {
+       QMessageBox::warning(this, "注册失败", "该用户名已存在！");
+       return;
+   }
+    // 存储用户信息
+    userCredentials[username] = password;
+    QMessageBox::information(this,"注册成功","账户注册成功！");
+
+    //清空输入框
+    nameInput_LE_ptr->clear();
+    pswdInput_LE_ptr->clear();
+
+}
+
+
